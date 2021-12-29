@@ -6,8 +6,8 @@ wp.blocks.registerBlockType("ourplugin/are-you-experienced", {
   icon: "smiley",
   category: "common",
   attributes: {
-    skyColor: {type: "string"},
-    grassColor: {type: "string"}
+    question: {type: "string"},
+    answers: {type: "array", default: ["red", "blue", "green"]}
   },
   edit: EditComponent,
   save: function (props) {
@@ -16,21 +16,31 @@ wp.blocks.registerBlockType("ourplugin/are-you-experienced", {
 })
 
 function EditComponent (props) {
-  function updateSkyColor(event) {
-    props.setAttributes({skyColor: event.target.value})
+  
+  function updateQuestion(value) {
+    props.setAttributes({question: value})
   }
 
-  function updateGrassColor(event) {
-    props.setAttributes({grassColor: event.target.value})
+  function deleteAnswer(indexToDelete) {
+    const newAnswers = props.attributes.answers.filter(function(x, index) {
+      return index != indexToDelete
+    })
+    props.setAttributes({answers: newAnswers})
   }
 
   return (
     <div className="experienced-edit-block">
-      <TextControl label="Question:" style={{fontSize: "20px"}} autocomplete="off" />
+      <TextControl label="Question:" value={props.attributes.question} onChange={updateQuestion} style={{fontSize: "20px"}} autocomplete="off" />
       <p style={{fontSize: "13px", margin: "20px 0 8px 0"}}>Answers:</p>
-      <Flex>
+      {props.attributes.answers.map(function (answer, index) {
+        return (
+          <Flex>
         <FlexBlock>
-          <TextControl />
+          <TextControl autoFocus={answer == undefined}  value={answer} onChange={newValue => {
+            const newAnswers = props.attributes.answers.concat([])
+            newAnswers[index] = newValue
+            props.setAttributes({answers: newAnswers})
+          }} />
         </FlexBlock>
         <FlexItem>
           <Button>
@@ -38,10 +48,14 @@ function EditComponent (props) {
           </Button>
         </FlexItem>
         <FlexItem>
-          <Button isLink className="attention-delete" >Delete</Button>
+          <Button isLink className="attention-delete" onClick={() => deleteAnswer(index) }>Delete</Button>
         </FlexItem>
       </Flex>
-      <Button isPrimary>Add another answer</Button>
+        )
+      })}
+      <Button isPrimary onClick={() => {
+        props.setAttributes({answers: props.attributes.answers.concat([undefined])})
+      }}>Add another answer</Button>
     </div>
   )
 }
